@@ -1,17 +1,22 @@
 #!/bin/bash
 
 export FLICK_PATH=$(pwd)
+sudo -- sh -c  'echo "export FLICK_PATH='$FLICK_PATH'">>'$HOME'/.bash_profile'
+
+source ~/.bash_profile
+echo $FLICK_PATH
 sudo apt-get install curl
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 sudo apt-get install -y nodejs
 echo 'Installing git, Python 3, and pip...'
 # libfreetype6-dev ziblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk
-git clone  https://github.com/nishantsingh1814/Flick.git
+
 
 sudo apt-get -yq install git python3.5.2 python3.5.2-dev libjpeg-dev libtiff5-dev zlib1g-dev > /dev/null 2>&1
 sudo apt-get -yq install python3-pip
 sudo apt-get -yq install curl
 sudo apt-get install libexempi3
+git clone  https://github.com/nishantsingh1814/Flick.git
 
 # Install virtualenv / virtualenvwrapper
 echo 'Installing and configuring virtualenv and virtualenvwrapper...'
@@ -24,10 +29,28 @@ sudo pip3 install django
 sudo apt-get install supervisor
 sudo service supervisor restart
 
+
+sudo  echo "#!/bin/bash
+
+echo $FLICK_PATH
+cd $FLICK_PATH/Flick
+
+npm run dev
+source $FLICK_PATH/Flick/env/bin/activate
+python3 $FLICK_PATH/Flick/flick/manage.py runserver 127.0.0.1:8000" >>$FLICK_PATH/Flick/bin/flick_server.sh 
+
+
 sudo -- sh -c  'echo "[program:flick]
-command ='$FLICK_PATH'/Flick/bin/flick_server.sh" >> /etc/supervisor/conf.d/flick.conf'
+command =npm run dev ;source '$FLICK_PATH'/Flick/env/bin/activate; python3 '$FLICK_PATH'/Flick/flick/manage.py runserver 127.0.0.1:8000
+directory='$FLICK_PATH'/Flick
+stderr_logfile='$FLICK_PATH'/Flick/logs/err.log
+stdout_logfile='$FLICK_PATH'/Flick/logs/out.log" >> /etc/supervisor/conf.d/flick.conf'
+
 sudo -- sh -c  'echo "[program:celery]
-command ='$FLICK_PATH'/Flick/bin/flickr_celery.sh">> /etc/supervisor/conf.d/celery.conf'
+command ='$FLICK_PATH'/Flick/env/bin/celery -A flick worker --loglevel=info --concurrency=10
+directory='$FLICK_PATH'/Flick/flick
+stderr_logfile='$FLICK_PATH'/Flick/logs/err.log
+stdout_logfile='$FLICK_PATH'/Flick/logs/out.log">> /etc/supervisor/conf.d/celery.conf'
 
 sudo -- sh -c  'echo "[program:flick_redis]
 command=redis-server">> /etc/supervisor/conf.d/redis.conf'
